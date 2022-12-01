@@ -7,13 +7,13 @@ LAP = LAPLinker;
 LAP.TrackDivision = true;
 LAP.DivisionScoreRange = [0 20];
 
-vid = VideoWriter('test.avi');
+vid = VideoWriter('test_r4c8.avi');
 vid.FrameRate = 5;
 open(vid)
 
 for iT = 1:102
     
-    I = readImage(dataDir, 4, 6, 1, 1, iT);
+    I = readImage(dataDir, 4, 8, 1, 1, iT);
     
     %%
     mask = imbinarize(I, 'adaptive', 'Sensitivity', 0.2);
@@ -49,6 +49,13 @@ for iT = 1:102
     
 end
 close(vid)
+
+tracks = LAP.tracks;
+
+save('output_object.mat', 'tracks')
+
+trackStruct = tracks.Tracks;
+save('output_struct.mat', 'trackStruct')
 
 % imshowpair(imadjust(I), bwperim(mask))
 
