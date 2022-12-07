@@ -3,59 +3,74 @@ clc
 
 dataDir = 'H:\HaCaT movies-20221101\QB-20221028-HaCaT__2022-10-28T16_46_24-Measurement 2\Images';
 
-outputDir = 'D:\Projects\ALMC Tickets\T17151-XuedongLiu\data\20221130_2';
+outputDir = 'D:\Projects\ALMC Tickets\T17151-XuedongLiu\data\20221207';
 
 threshold = 50;
 
-rows = [4, 5];
-cols = [6, 7, 8];
+%rows = [4, 5];
+%cols = [6, 7, 8];
+rows = 5;
+cols = 8;
+fields = 7;
+
+rows = 5;
+cols = 8;
+
+if ~exist(outputDir, 'dir')
+
+    mkdir(outputDir);
+
+end
 
 for iRow = rows
     for iCol = cols
 
-        outputFN = ['r', sprintf('%02.0f', iRow), 'c', sprintf('%02.0f', iCol)];
+        for iField = fields
 
-        LAP = LAPLinker;
-        LAP.TrackDivision = true;
-        LAP.LinkScoreRange = [0 50];
-        LAP.DivisionScoreRange = [0 20];
+            outputFN = ['r', sprintf('%02.0f', iRow), 'c', sprintf('%02.0f', iCol), 'f', sprintf('%02.0f', iField)];
 
-        vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
-        vid.FrameRate = 5;
-        open(vid)
+            LAP = LAPLinker;
+            LAP.LinkCostMetric = 'distance';
+            LAP.TrackDivision = true;
+            LAP.LinkScoreRange = [0 50];
+            LAP.DivisionScoreRange = [0 20];
 
-        for iT = 1:102
+            vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
+            vid.FrameRate = 5;
+            open(vid)
 
-            I = readImage(dataDir, iRow, iCol, 1, 1, iT);
+            for iT = 1:102
 
-            mask = segmentCells(I, threshold);
+                I = readImage(dataDir, iRow, iCol, iField, 1, iT);
 
-            data = regionprops(mask, 'Centroid');
+                mask = segmentCells(I, threshold);
 
-            LAP = assignToTrack(LAP, iT, data);
+                data = regionprops(mask, 'Centroid');
 
-            Iout = double(I);
-            Iout = (Iout - min(Iout, [], 'all'))/(max(Iout, [], 'all') - min(Iout, [], 'all'));
+                LAP = assignToTrack(LAP, iT, data);
 
-            Iout = showoverlay(imadjust(Iout), bwperim(mask));
-            for iAT = LAP.activeTrackIDs
-                ct = getTrack(LAP, iAT);
-                Iout = insertText(Iout, ct.Centroid(end, :), int2str(iAT), ...
-                    'TextColor', 'white', 'BoxOpacity', 0);
+                Iout = double(I);
+                Iout = (Iout - min(Iout, [], 'all'))/(max(Iout, [], 'all') - min(Iout, [], 'all'));
+
+                Iout = showoverlay(imadjust(Iout), bwperim(mask));
+                for iAT = LAP.activeTrackIDs
+                    ct = getTrack(LAP, iAT);
+                    Iout = insertText(Iout, ct.Centroid(end, :), int2str(iAT), ...
+                        'TextColor', 'white', 'BoxOpacity', 0);
+                end
+
+                writeVideo(vid, Iout);
+
             end
+            close(vid)
 
-            writeVideo(vid, Iout);
+            tracks = LAP.tracks;
+            trackStruct = tracks.Tracks;
 
+            save(fullfile(outputDir, [outputFN, '.mat']), 'tracks', 'trackStruct', 'threshold');
+
+            exportsettings(LAP, fullfile(outputDir, [outputFN, '_trackingParams.txt']));
         end
-        close(vid)
-
-        tracks = LAP.tracks;
-        trackStruct = tracks.Tracks;
-
-        save(fullfile(outputDir, [outputFN, '.mat']), 'tracks', 'trackStruct', 'threshold');
-
-        exportsettings(LAP, fullfile(outputDir, [outputFN, '_trackingParams.txt']));
-
     end
 end
 
