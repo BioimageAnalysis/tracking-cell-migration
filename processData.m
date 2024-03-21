@@ -1,20 +1,17 @@
 clearvars
 clc
 
-dataDir = 'H:\HaCaT movies-20221101\QB-20221028-HaCaT__2022-10-28T16_46_24-Measurement 2\Images';
+dataDir = 'F:\2024 Liu Lab\Duration data + HeCAT21624__2024-02-16T15_55_35-Measurement 1\Images';
 
-outputDir = 'D:\Projects\ALMC Tickets\T17151-XuedongLiu\data\20221207';
+outputDir = 'D:\Work\Research\20240321';
 
-threshold = 50;
+threshold = 200;
 
 %rows = [4, 5];
 %cols = [6, 7, 8];
-rows = 5;
-cols = 8;
-fields = 7;
-
-rows = 5;
-cols = 8;
+rows = 3;
+cols = 11;
+fields = 4;
 
 if ~exist(outputDir, 'dir')
 
@@ -30,18 +27,18 @@ for iRow = rows
             outputFN = ['r', sprintf('%02.0f', iRow), 'c', sprintf('%02.0f', iCol), 'f', sprintf('%02.0f', iField)];
 
             LAP = LAPLinker;
-            LAP.LinkCostMetric = 'distance';
+            LAP.LinkCostMetric = 'euclidean';
             LAP.TrackDivision = true;
-            LAP.LinkScoreRange = [0 50];
+            LAP.LinkScoreRange = [0 40];
             LAP.DivisionScoreRange = [0 20];
 
             vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
             vid.FrameRate = 5;
             open(vid)
 
-            for iT = 1:102
+            for iT = 1:10
 
-                I = readImage(dataDir, iRow, iCol, iField, 1, iT);
+                I = readImage(dataDir, iRow, iCol, iField, 2, iT);
 
                 mask = segmentCells(I, threshold);
 
