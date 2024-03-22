@@ -5,13 +5,13 @@ dataDir = 'F:\2024 Liu Lab\Duration data + HeCAT21624__2024-02-16T15_55_35-Measu
 
 outputDir = 'D:\Work\Research\20240321';
 
-threshold = 200;
+threshold = 100;
 
 %rows = [4, 5];
 %cols = [6, 7, 8];
-rows = 3;
-cols = 11;
-fields = 4;
+rows = 2;
+cols = 9;
+fields = [7];
 
 if ~exist(outputDir, 'dir')
 
@@ -36,9 +36,10 @@ for iRow = rows
             vid.FrameRate = 5;
             open(vid)
 
-            for iT = 1:10
+            for iT = 1:100
 
                 I = readImage(dataDir, iRow, iCol, iField, 2, iT);
+                % imshow(I, [])
 
                 mask = segmentCells(I, threshold);
 
