@@ -39,4 +39,7 @@ mask(L == 0) = false;
 mask = imclearborder(mask);
 
 
-showoverlay(I, bwperim(mask));
+% Iout = double(I);
+% Iout = (Iout - min(Iout, [], 'all'))/(0.5 .* max(Iout, [], 'all') - min(Iout, [], 'all'));
+% 
+% showoverlay(Iout, bwperim(mask));

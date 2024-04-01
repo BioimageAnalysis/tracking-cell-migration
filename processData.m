@@ -13,6 +13,8 @@ rows = 2;
 cols = 9;
 fields = [7];
 
+roiCols = [200 600];
+
 if ~exist(outputDir, 'dir')
 
     mkdir(outputDir);
@@ -36,9 +38,17 @@ for iRow = rows
             vid.FrameRate = 5;
             open(vid)
 
-            for iT = 1:100
+            for iT = 1:180
+
+                if rem(iT, 10) == 0                    
+                    fprintf('$s% completed.\n', (iT/10) * 100)
+                    save('currentData.mat', 'LAP');
+                end
 
                 I = readImage(dataDir, iRow, iCol, iField, 2, iT);
+
+                I = I(:, roiCols(1):roiCols(2));
+
                 % imshow(I, [])
 
                 mask = segmentCells(I, threshold);
