@@ -15,6 +15,8 @@ fields = [7];
 
 roiCols = [200 600];
 
+frameRange = 1:110;
+
 if ~exist(outputDir, 'dir')
 
     mkdir(outputDir);
@@ -31,18 +33,20 @@ for iRow = rows
             LAP = LAPLinker;
             LAP.LinkCostMetric = 'euclidean';
             LAP.TrackDivision = true;
-            LAP.LinkScoreRange = [0 40];
+            LAP.LinkScoreRange = [0 15];
             LAP.DivisionScoreRange = [0 20];
 
             vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
             vid.FrameRate = 5;
             open(vid)
 
-            for iT = 1:180
+            for iT = frameRange
 
-                if rem(iT, 10) == 0                    
-                    fprintf('$s% completed.\n', (iT/10) * 100)
+                if rem(iT, 10) == 0
+
+                    fprintf('%.1f %% completed.\n', ((iT - frameRange(1))/numel(frameRange)) * 100)
                     save('currentData.mat', 'LAP');
+
                 end
 
                 I = readImage(dataDir, iRow, iCol, iField, 2, iT);
