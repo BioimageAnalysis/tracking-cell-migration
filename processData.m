@@ -3,7 +3,7 @@ clc
 
 dataDir = 'F:\2024 Liu Lab\Duration data + HeCAT21624__2024-02-16T15_55_35-Measurement 1\Images';
 
-outputDir = 'D:\Work\Research\20240321';
+outputDir = 'C:\Users\Jian Tay\OneDrive - UCB-O365\Shared\Share with Bortz Liu labs\20240531';
 
 threshold = 100;
 
@@ -13,7 +13,7 @@ rows = 2;
 cols = 9;
 fields = [7];
 
-roiCols = [200 600];
+roiCols = [601 900];
 
 frameRange = 1:110;
 
