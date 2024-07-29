@@ -3,7 +3,7 @@ clc
 
 dataDir = 'F:\2024 Liu Lab\Duration data + HeCAT21624__2024-02-16T15_55_35-Measurement 1\Images';
 
-outputDir = 'D:\Work\Research\20240321';
+outputDir = 'D:\Projects\Research\2022 woundhealing\data';
 
 threshold = 100;
 
@@ -38,16 +38,31 @@ for iRow = rows
             vid.FrameRate = 5;
             open(vid)
 
-            for iT = 1:180
+            for iT = 1:200
 
                 if rem(iT, 10) == 0                    
-                    fprintf('$s% completed.\n', (iT/10) * 100)
+                    fprintf('%s - %.0f percent completed.\n', datetime, (iT/200) * 100)
                     save('currentData.mat', 'LAP');
                 end
 
-                I = readImage(dataDir, iRow, iCol, iField, 2, iT);
+                try
 
-                I = I(:, roiCols(1):roiCols(2));
+                I = readImage(dataDir, iRow, iCol, iField, 2, iT);
+                skippedFrames = 0;
+
+                catch
+
+                    skippedFrames = skippedFrames + 1;
+
+                    if skippedFrames > 10
+                        break
+                    end
+
+                    continue
+
+                end
+
+                %I = I(:, roiCols(1):roiCols(2));
 
                 % imshow(I, [])
 
