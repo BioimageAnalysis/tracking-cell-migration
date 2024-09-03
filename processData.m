@@ -11,7 +11,7 @@ threshold = 100;
 %cols = [6, 7, 8];
 rows = 2;
 cols = 9;
-fields = [7];
+fields = 7;
 
 roiCols = [601 900];
 
