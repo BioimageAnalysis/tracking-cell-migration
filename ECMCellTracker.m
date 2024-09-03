@@ -12,6 +12,18 @@ classdef ECMCellTracker
     %  The easiest way to obtain appropriate fields of view is to open the
     %  dataset in the Harmony viewer to ensure appropriate cell density.
     %
+     % For each location processed, the code outputs a number of files:
+     %   * An AVI-file showing the outline and ID of detected nuclei
+     %   * A MAT-file containing information about the tracked nuclei
+     %   * A text file of the parameters used to process the movie
+     % 
+     % The following variables should be present in the MAT-file:
+     %   * 'tracks' and 'trackStruct' both containing the same information
+     %     about tracked cells (see
+     %     https://github.com/Biofrontiers-ALMC/cell-tracking-toolbox/wiki/overview-trackarray)
+     %   * 'isTrackValid' - a logical array showing if the indexed track
+     %     has a length of at least 90% of the movie.  
+    %
     %  Also note that due to the high-throuhghput nature of the Opera
     %  Phenix imager, occasional frames are skipped by the hardware. The
     %  tracker tries to account for this, but will stop processing if more
@@ -34,7 +46,7 @@ classdef ECMCellTracker
     %  %Process wells C2 (field 7) and E9 (field 8)
     %  process(T, DIR, [3, 2, 7; 5, 9, 8])
     %
-    %  See also: ECMTracker/process
+    %  See also: ECMCellTracker/process
 
     properties
 
@@ -67,7 +79,7 @@ classdef ECMCellTracker
             %  processing. Actual processing code is in the function
             %  processFile.
             %
-            %  See also: OPCellTracker/processFile
+            %  See also: ECMCellTracker/processFile
 
             %Parse inputs
             if ~exist('dataDir', 'var')
