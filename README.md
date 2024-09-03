@@ -1,6 +1,6 @@
 # Tracking cell migration
 
-The goal of this project is to understand the rules governing cell migration.
+The goal of this project is to understand the rules governing cell migration. This code identifies and tracks fluorescently-labeled cell nuclei captured using the Revvity (formerly Perkin Elmer) Opera Phenix imager. The project is a collaboration between the Liu lab, the Bortz lab, and the BioFrontiers Bioimage Analysis Group.
 
 ## Algorithm description
 
