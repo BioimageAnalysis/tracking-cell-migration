@@ -211,7 +211,7 @@ classdef ECMCellTracker
                 Iout = double(I);
                 Iout = (Iout - min(Iout, [], 'all'))/(max(Iout, [], 'all') - min(Iout, [], 'all'));
 
-                Iout = showoverlay(imadjust(Iout), bwperim(mask));
+                Iout = ECMCellTracker.showoverlay(imadjust(Iout), bwperim(mask));
                 for iAT = LAP.activeTrackIDs
                     ct = getTrack(LAP, iAT);
                     Iout = insertText(Iout, ct.Centroid(end, :), int2str(iAT), ...
