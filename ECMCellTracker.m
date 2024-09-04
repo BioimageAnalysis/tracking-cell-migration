@@ -118,8 +118,8 @@ classdef ECMCellTracker
             opts.MaxLinkingDistance = obj.MaxLinkingDistance;
 
             %Process files
-            %parfor (iFile = 1:numLocs, M)
-            for iFile = 1:numLocs
+            parfor (iFile = 1:numLocs, M)
+            %for iFile = 1:numLocs
 
                 ECMCellTracker.processFile(dataDir, outputDir, locations(iFile, :), opts)
 
