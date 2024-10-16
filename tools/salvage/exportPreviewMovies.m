@@ -1,6 +1,6 @@
 function exportPreviewMovies(dirList)
 
-tmpExportDir = 'D:\Projects\Research\2022 woundhealing\20240801_export';
+tmpExportDir = 'W:\transferred files-09162024\exportedVideos';
 pat = characterListPattern(':\');
 
 for ii = 1:numel(dirList)

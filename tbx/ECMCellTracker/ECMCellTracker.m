@@ -59,6 +59,10 @@ classdef ECMCellTracker
         ParallelProcess = false;  %Set to true to enable parallel processing
         ParallelRequestedWorkers = 4;
 
+        NuclearChannel = 3;  %Nuclear channel
+        DonorChannel = 1;
+        AcceptorChannel = 2;
+
     end
 
     methods
@@ -116,6 +120,9 @@ classdef ECMCellTracker
             opts.NucleiQuality = obj.NucleiQuality;
             opts.FrameRange = obj.FrameRange;
             opts.MaxLinkingDistance = obj.MaxLinkingDistance;
+            opts.NuclearChannel = obj.NuclearChannel;
+            opts.DonorChannel = obj.DonorChannel;
+            opts.AcceptorChannel = obj.AcceptorChannel;
 
             %Process files
             parfor (iFile = 1:numLocs, M)
@@ -174,7 +181,7 @@ classdef ECMCellTracker
 
                 try
 
-                    I = ECMCellTracker.readImage(dataDir, row, col, field, iT, 2);
+                    I = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.NuclearChannel);
                     skippedFrames = 0;
 
                 catch
@@ -202,8 +209,24 @@ classdef ECMCellTracker
                 %Identify the nuclei
                 mask = ECMCellTracker.segmentCells(I, opts.NucleiQuality);
 
+                cc = bwlabeln(mask);
+                
                 %Measure nuclei position
-                data = regionprops(mask, 'Centroid');
+                data = regionprops(cc, 'Centroid');
+
+                Idonor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
+                Iacceptor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
+                
+                %Make a cytoplasmic ring
+                cytoMask = imdilate(cc, strel('disk', 3));
+                cytoMask(cc > 0) = 0;
+
+                %Measure ERK ratio
+                cytoData = regionprops(cytoMask, Iacceptor./Idonor, 'MeanIntensity');
+
+                for iData = 1:numel(cytoData)
+                    data(iData).ERKintensity = cytoData(iData).MeanIntensity;
+                end
 
                 LAP = assignToTrack(LAP, iT, data);
 
@@ -279,6 +302,7 @@ classdef ECMCellTracker
             mask(L == 0) = false;
             mask = imclearborder(mask);
 
+            mask = bwareaopen(mask, 20);
 
         end
 
@@ -319,6 +343,7 @@ classdef ECMCellTracker
             % f (01-09) = field
             % p (01-21) = plane
             % ch (1-4) = channel
+            % sk = timepoint
 
             if ~exist(fullfile(dataDir, filename), 'file')
                 error('ECMCellTracker:readImage:FileNotFound', 'Could not find file %s.', ...
