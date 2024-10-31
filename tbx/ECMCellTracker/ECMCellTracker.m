@@ -63,6 +63,8 @@ classdef ECMCellTracker
         DonorChannel = 1;
         AcceptorChannel = 2;
 
+        SegmentType = 'nuclear';
+
     end
 
     methods
@@ -123,6 +125,7 @@ classdef ECMCellTracker
             opts.NuclearChannel = obj.NuclearChannel;
             opts.DonorChannel = obj.DonorChannel;
             opts.AcceptorChannel = obj.AcceptorChannel;
+            opts.SegmentType = obj.SegmentType;
 
             %Process files
             parfor (iFile = 1:numLocs, M)
@@ -181,20 +184,35 @@ classdef ECMCellTracker
 
                 try
 
-                    I = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.NuclearChannel);
+                    switch opts.SegmentType
+                        case 'nuclear'
+                            I = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.NuclearChannel);
+
+                        case 'holes'
+                            I1 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
+                            I2 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
+
+                            I = I1 + I2;
+                    end
+                    
                     skippedFrames = 0;
 
-                catch
+                catch ME
 
-                    skippedFrames = skippedFrames + 1;
+                    if strcmp(ME.identifier, 'ECMCellTracker:readImage:FileNotFound')
 
-                    if skippedFrames > 10
-                        fprintf('[%s] ERROR - Too many missing frames: %s\n', ...
-                            datetime, outputFN)
-                        break
+                        skippedFrames = skippedFrames + 1;
+
+                        if skippedFrames > 10
+                            fprintf('[%s] ERROR - Too many missing frames: %s\n', ...
+                                datetime, outputFN)
+                            break
+                        end
+
+                        continue
+                    else
+                        rethrow(ME);
                     end
-
-                    continue
 
                 end
 
@@ -207,7 +225,13 @@ classdef ECMCellTracker
                 end
 
                 %Identify the nuclei
-                mask = ECMCellTracker.segmentCells(I, opts.NucleiQuality);
+                switch opts.SegmentType
+                    case 'nuclear'
+                        mask = ECMCellTracker.segmentCells(I, opts.NucleiQuality);
+
+                    case 'holes'
+                        mask = ECMCellTracker.segmentHoles(I, opts.NucleiQuality);
+                end
 
                 cc = bwlabeln(mask);
                 
@@ -472,6 +496,38 @@ classdef ECMCellTracker
                 imshow(img,[])
             else
                 varargout = {img};
+            end
+
+        end
+
+        function mask = segmentHoles(I, quality)
+
+            Ib = imgaussfilt(I, 1);
+            Ic = imclose(Ib, strel('disk', 7));
+            Id = Ic - Ib;
+
+            %imshow(Ic - Ib, [])
+
+            mask = Id > quality;
+            mask = imopen(mask, strel('disk', 2));
+
+            dd = -bwdist(~mask);
+            dd = imhmin(dd, 1);
+            dd(~mask) = -Inf;
+
+            LL = watershed(dd);
+
+            mask(LL == 0) = false;
+
+            mask = bwareaopen(mask, 20);
+
+            data = regionprops(mask, 'Circularity', 'PixelIdxList');
+            %histogram([data.Circularity])
+
+            for ii = 1:numel(data)
+                if data(ii).Circularity < 0.5
+                    mask(data(ii).PixelIdxList) = false;
+                end
             end
 
         end
