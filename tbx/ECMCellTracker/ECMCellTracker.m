@@ -64,12 +64,14 @@ classdef ECMCellTracker
         AcceptorChannel = 2;
 
         SegmentType = 'nuclear';
+        FileFormat = 'OperaPhenix';  %Alt: exportedtiff
+        UseMask = false;
 
     end
 
     methods
 
-        function process(obj, dataDir, outputDir, varargin)
+        function process(obj, dataDir, outputDir, locations, varargin)
             %PROCESS  Identify and track nuclei in Opera Phenix images
             %
             %  PROCESS(OBJ, DATADIR, OUTPUTDIR) will process all wells and
@@ -99,17 +101,12 @@ classdef ECMCellTracker
                     mkdir(outputDir);
                 end
             end
-
-            if isempty(varargin)
-
-                %TODO: Get all wells and cols and fields from directory
+           
+            if ~isempty(locations)
+                numLocs = size(locations, 1);
             else
-
-                locations = varargin{1};
-
+                numLocs = 1;
             end
-
-            numLocs = size(locations, 1);
 
             if obj.ParallelProcess && numLocs > 1
                 M = obj.ParallelRequestedWorkers;
@@ -126,10 +123,11 @@ classdef ECMCellTracker
             opts.DonorChannel = obj.DonorChannel;
             opts.AcceptorChannel = obj.AcceptorChannel;
             opts.SegmentType = obj.SegmentType;
+            opts.FileFormat = obj.FileFormat;
+            opts.UseMask = obj.UseMask;
 
             %Process files
             parfor (iFile = 1:numLocs, M)
-            %for iFile = 1:numLocs
 
                 ECMCellTracker.processFile(dataDir, outputDir, locations(iFile, :), opts)
 
@@ -168,7 +166,7 @@ classdef ECMCellTracker
             LAP.LinkCostMetric = 'euclidean';
             LAP.TrackDivision = true;
             LAP.LinkScoreRange = [0 opts.MaxLinkingDistance];
-            LAP.DivisionScoreRange = [0 20];
+            LAP.DivisionScoreRange = [0 12];
 
             vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
             vid.FrameRate = 5;
@@ -182,39 +180,54 @@ classdef ECMCellTracker
                 %stop processing the current dataset.
                 skippedFrames = 0;
 
-                try
+                switch lower(opts.FileFormat)
 
-                    switch opts.SegmentType
-                        case 'nuclear'
-                            I = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.NuclearChannel);
+                    case 'operaphenix'
 
-                        case 'holes'
-                            I1 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
-                            I2 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
+                        try
+                            switch opts.SegmentType
+                                case 'nuclear'
+                                    I = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.NuclearChannel);
 
-                            I = I1 + I2;
-                    end
-                    
-                    skippedFrames = 0;
+                                case 'holes'
+                                    I1 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
+                                    I2 = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
 
-                catch ME
+                                    I = I1 + I2;
+                            end
 
-                    if strcmp(ME.identifier, 'ECMCellTracker:readImage:FileNotFound')
+                            Idonor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
+                            Iacceptor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
 
-                        skippedFrames = skippedFrames + 1;
+                            skippedFrames = 0;
 
-                        if skippedFrames > 10
-                            fprintf('[%s] ERROR - Too many missing frames: %s\n', ...
-                                datetime, outputFN)
-                            break
+                        catch ME
+
+                            if strcmp(ME.identifier, 'ECMCellTracker:readImage:FileNotFound')
+
+                                skippedFrames = skippedFrames + 1;
+
+                                if skippedFrames > 10
+                                    fprintf('[%s] ERROR - Too many missing frames: %s\n', ...
+                                        datetime, outputFN)
+                                    break
+                                end
+
+                                continue
+                            else
+                                rethrow(ME);
+                            end
                         end
 
-                        continue
-                    else
-                        rethrow(ME);
-                    end
+                    case 'exportedtiff'
 
-                end
+                        %Expect the 'location' to be the base filename
+                        I = imread(fullfile(dataDir, [loc, '_ch', sprintf('%d',opts.NuclearChannel), '.tif']), iT);
+
+                        Idonor = imread(fullfile(dataDir, [loc, '_ch', sprintf('%d',opts.DonorChannel), '.tif']), iT);
+                        Iacceptor = imread(fullfile(dataDir, [loc, '_ch', sprintf('%d',opts.AcceptorChannel), '.tif']), iT);
+                        
+                end               
 
                 %Crop image if specified
                 if ~isempty(opts.ROI)
@@ -225,21 +238,26 @@ classdef ECMCellTracker
                 end
 
                 %Identify the nuclei
-                switch opts.SegmentType
-                    case 'nuclear'
-                        mask = ECMCellTracker.segmentCells(I, opts.NucleiQuality);
+                if ~opts.UseMask
+                    switch opts.SegmentType
+                        case 'nuclear'
+                            mask = ECMCellTracker.segmentCells(I, opts.NucleiQuality);
 
-                    case 'holes'
-                        mask = ECMCellTracker.segmentHoles(I, opts.NucleiQuality);
+                        case 'holes'
+                            mask = ECMCellTracker.segmentHoles(I, opts.NucleiQuality);
+                    end
+                else
+
+                    %TODO: Only for exportedtiff for now...
+                    mask = imread(fullfile(dataDir, [loc, '_mask.tif']), iT);
+                    mask = mask == 0;
+
                 end
 
                 cc = bwlabeln(mask);
                 
                 %Measure nuclei position
-                data = regionprops(cc, 'Centroid');
-
-                Idonor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.DonorChannel);
-                Iacceptor = ECMCellTracker.readImage(dataDir, row, col, field, iT, opts.AcceptorChannel);
+                data = regionprops(cc, 'Centroid');   
                 
                 %Make a cytoplasmic ring
                 cytoMask = imdilate(cc, strel('disk', 3));
@@ -255,13 +273,21 @@ classdef ECMCellTracker
                 LAP = assignToTrack(LAP, iT, data);
 
                 %Generate output video
-                Iout = double(I);
-                Iout = (Iout - min(Iout, [], 'all'))/(max(Iout, [], 'all') - min(Iout, [], 'all'));
 
-                Iout = ECMCellTracker.showoverlay(imadjust(Iout), bwperim(mask));
+                InuclNorm = ECMCellTracker.normalizeImage(I);
+                IratioNorm = ECMCellTracker.normalizeImage(double(Iacceptor) ./ (double(Idonor) + 0.001));
+
+                Iout = cat(3, InuclNorm, IratioNorm, IratioNorm);
+
+                expandFactor = 4;
+                Iout = imresize(Iout, expandFactor);
+
+                Iout = insertShape(Iout, 'filled-circle', [cat(1, data.Centroid) * expandFactor, ones(numel(data), 1) * 3], ...
+                    'ShapeColor', 'yellow');
+
                 for iAT = LAP.activeTrackIDs
                     ct = getTrack(LAP, iAT);
-                    Iout = insertText(Iout, ct.Centroid(end, :), int2str(iAT), ...
+                    Iout = insertText(Iout, ct.Centroid(end, :) * expandFactor, int2str(iAT), ...
                         'TextColor', 'white', 'BoxOpacity', 0);
                 end
 
@@ -272,6 +298,11 @@ classdef ECMCellTracker
 
             tracks = LAP.tracks;
             trackStruct = tracks.Tracks;
+
+            %% Filter out tracks that are too short
+
+
+
 
             %Perform a quality check by looking for cells that are tracked
             %for at least 90% of the movie
@@ -529,6 +560,14 @@ classdef ECMCellTracker
                     mask(data(ii).PixelIdxList) = false;
                 end
             end
+
+        end
+
+        function imageOut = normalizeImage(imageIn)
+
+            imageIn = double(imageIn);
+            imageOut = (imageIn - min(imageIn, [], 'all'))/(max(imageIn, [], 'all') - min(imageIn, [], 'all'));
+            imageOut = uint8(imageOut * 255);
 
         end
 
