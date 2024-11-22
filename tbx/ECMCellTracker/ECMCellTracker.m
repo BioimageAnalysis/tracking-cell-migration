@@ -12,17 +12,17 @@ classdef ECMCellTracker
     %  The easiest way to obtain appropriate fields of view is to open the
     %  dataset in the Harmony viewer to ensure appropriate cell density.
     %
-     % For each location processed, the code outputs a number of files:
-     %   * An AVI-file showing the outline and ID of detected nuclei
-     %   * A MAT-file containing information about the tracked nuclei
-     %   * A text file of the parameters used to process the movie
-     % 
-     % The following variables should be present in the MAT-file:
-     %   * 'tracks' and 'trackStruct' both containing the same information
-     %     about tracked cells (see
-     %     https://github.com/Biofrontiers-ALMC/cell-tracking-toolbox/wiki/overview-trackarray)
-     %   * 'isTrackValid' - a logical array showing if the indexed track
-     %     has a length of at least 90% of the movie.  
+    % For each location processed, the code outputs a number of files:
+    %   * An AVI-file showing the outline and ID of detected nuclei
+    %   * A MAT-file containing information about the tracked nuclei
+    %   * A text file of the parameters used to process the movie
+    %
+    % The following variables should be present in the MAT-file:
+    %   * 'tracks' and 'trackStruct' both containing the same information
+    %     about tracked cells (see
+    %     https://github.com/Biofrontiers-ALMC/cell-tracking-toolbox/wiki/overview-trackarray)
+    %   * 'isTrackValid' - a logical array showing if the indexed track
+    %     has a length of at least 90% of the movie.
     %
     %  Also note that due to the high-throuhghput nature of the Opera
     %  Phenix imager, occasional frames are skipped by the hardware. The
@@ -77,7 +77,8 @@ classdef ECMCellTracker
             %  PROCESS(OBJ, DATADIR, OUTPUTDIR) will process all wells and
             %  fields of the dataset in DATADIR. The resulting data will be
             %  saved to OUTPUTDIR. If either directory is not specified, a
-            %  dialog box will pop up to allow the user to select one.
+            %  dialog box will pop up to allow the user to select one. NOTE
+            %  that the DATADIR must end with \Images.
             %
             %  PROCESS(OBJ, ..., COORDS) will process only the wells and
             %  fields specified. COORDS must be an N-by-3 matrix where each
@@ -101,7 +102,7 @@ classdef ECMCellTracker
                     mkdir(outputDir);
                 end
             end
-           
+
             if ~isempty(locations)
                 numLocs = size(locations, 1);
             else
@@ -127,6 +128,7 @@ classdef ECMCellTracker
             opts.UseMask = obj.UseMask;
 
             %Process files
+            %for iFile = 1
             parfor (iFile = 1:numLocs, M)
 
                 ECMCellTracker.processFile(dataDir, outputDir, locations(iFile, :), opts)
@@ -160,7 +162,7 @@ classdef ECMCellTracker
             outputFN = [baseDir, '_r', sprintf('%02.0f', row), 'c', sprintf('%02.0f', col), 'f', sprintf('%02.0f', field)];
 
             fprintf('[%s] Starting processing file: %s\n', ...
-                    datetime, outputFN)
+                datetime, outputFN)
 
             LAP = LAPLinker;
             LAP.LinkCostMetric = 'euclidean';
@@ -226,13 +228,19 @@ classdef ECMCellTracker
 
                         Idonor = imread(fullfile(dataDir, [loc, '_ch', sprintf('%d',opts.DonorChannel), '.tif']), iT);
                         Iacceptor = imread(fullfile(dataDir, [loc, '_ch', sprintf('%d',opts.AcceptorChannel), '.tif']), iT);
-                        
-                end               
+
+                end
 
                 %Crop image if specified
                 if ~isempty(opts.ROI)
 
                     I = I(opts.ROI(1):(opts.ROI(1) + opts.ROI(3)), ...
+                        opts.ROI(2):(opts.ROI(2) + opts.ROI(4)));
+
+                    Idonor = Idonor(opts.ROI(1):(opts.ROI(1) + opts.ROI(3)), ...
+                        opts.ROI(2):(opts.ROI(2) + opts.ROI(4)));
+
+                    Iacceptor = Iacceptor(opts.ROI(1):(opts.ROI(1) + opts.ROI(3)), ...
                         opts.ROI(2):(opts.ROI(2) + opts.ROI(4)));
 
                 end
@@ -246,6 +254,15 @@ classdef ECMCellTracker
                         case 'holes'
                             mask = ECMCellTracker.segmentHoles(I, opts.NucleiQuality);
                     end
+
+                    %Save the mask
+                    if iT == opts.FrameRange(1)
+                        imwrite(mask, fullfile(outputDir, [outputFN, '_mask.tif']), 'Compression', 'none')
+                    else
+                        imwrite(mask, fullfile(outputDir, [outputFN, '_mask.tif']), 'Compression', 'none', 'writeMode', 'append')
+                    end
+
+
                 else
 
                     %TODO: Only for exportedtiff for now...
@@ -255,10 +272,10 @@ classdef ECMCellTracker
                 end
 
                 cc = bwlabeln(mask);
-                
+
                 %Measure nuclei position
-                data = regionprops(cc, 'Centroid');   
-                
+                data = regionprops(cc, 'Centroid');
+
                 %Make a cytoplasmic ring
                 cytoMask = imdilate(cc, strel('disk', 3));
                 cytoMask(cc > 0) = 0;
@@ -279,8 +296,8 @@ classdef ECMCellTracker
 
                 Iout = cat(3, InuclNorm, IratioNorm, IratioNorm);
 
-                expandFactor = 4;
-                Iout = imresize(Iout, expandFactor);
+                expandFactor = 1;
+                % Iout = imresize(Iout, expandFactor);
 
                 Iout = insertShape(Iout, 'filled-circle', [cat(1, data.Centroid) * expandFactor, ones(numel(data), 1) * 3], ...
                     'ShapeColor', 'yellow');
@@ -312,7 +329,7 @@ classdef ECMCellTracker
                 if numel(tracks.Tracks.Frames) >= (0.9 * numel(opts.FrameRange))
                     isTrackValid(iTrack) = true;
                 end
-            end 
+            end
             nValidTracks = nnz(isTrackValid);
 
             save(fullfile(outputDir, [outputFN, '.mat']), ...
@@ -322,7 +339,7 @@ classdef ECMCellTracker
             exportsettings(LAP, fullfile(outputDir, [outputFN, '_trackingParams.txt']));
 
             fprintf('[%s] Completed processing file: %s\n', ...
-                    datetime, outputFN)
+                datetime, outputFN)
         end
 
         function mask = segmentCells(I, quality)
@@ -337,7 +354,7 @@ classdef ECMCellTracker
             %
             %  Q is the quality of nuclei detection. A higher Q value will
             %  result in less nuclei being detected, although the
-            %  detections may be more accurate. 
+            %  detections may be more accurate.
 
             I = double(I);
 
@@ -370,13 +387,13 @@ classdef ECMCellTracker
             %  read. Note that the parameters must be passed in that order.
             %  FOLDER should be the path to the folder that exported from
             %  the Harmony software.
-            
+
             ip = inputParser;
             addRequired(ip, 'row')
             addRequired(ip, 'col')
             addOptional(ip, 'field', 1)
             addOptional(ip, 'frame', 1)
-            addOptional(ip, 'channel', 1)            
+            addOptional(ip, 'channel', 1)
             addOptional(ip, 'plane', 1)
             parse(ip, varargin{:})
 
