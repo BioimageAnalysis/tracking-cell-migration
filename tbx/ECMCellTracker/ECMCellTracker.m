@@ -164,12 +164,34 @@ classdef ECMCellTracker
             fprintf('[%s] Starting processing file: %s\n', ...
                 datetime, outputFN)
 
+            %If FrameRange is set to infinite, then get the number of
+            %frames from the filename
+            if isinf(opts.FrameRange)
+                %Generate the template filename
+                template = ...
+                    sprintf('r%02dc%02df%02dp%02d-ch%dsk(\\d+)fk1fl1.tiff', ...
+                        row, col, field, 1, iC);
+
+                R = regexp(filenames, template, 'tokens');
+
+                minFrame = Inf;
+                maxFrame = -Inf;
+                for iR = 1:numel(R)
+                    maxFrame = max(maxFrame, str2double(R{iR}{1}));
+                    minFrame = min(minFrame, str2double(R{iR}{1}));
+                end
+
+                opts.FrameRange = minFrame:maxFrame;
+            end
+
+            %Create the LAP Linker object
             LAP = LAPLinker;
             LAP.LinkCostMetric = 'euclidean';
             LAP.TrackDivision = true;
             LAP.LinkScoreRange = [0 opts.MaxLinkingDistance];
             LAP.DivisionScoreRange = [0 12];
 
+            %Create output video file
             vid = VideoWriter(fullfile(outputDir, [outputFN, '.avi']));
             vid.FrameRate = 5;
             open(vid)
@@ -244,6 +266,10 @@ classdef ECMCellTracker
                         opts.ROI(2):(opts.ROI(2) + opts.ROI(4)));
 
                 end
+
+                %Convert donor and acceptor to douvles
+                Idonor = double(Idonor);
+                Iacceptor = double(Iacceptor);
 
                 %Identify the nuclei
                 if ~opts.UseMask
