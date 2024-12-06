@@ -106,3 +106,7 @@ See [here](https://biof-imagewiki.colorado.edu/books/facility-guidelines/page/re
 [^1]: Jian Wei Tay and Jeffrey C. Cameron. Computational and biochemical methods to measure the activity of carboxysomes and protein organelles in vivo. In Methods in Enzymology, Editor(s) Joseph Jez. (2023). https://doi.org/10.1016/bs.mie.2022.09.010
 [^2]: Jaqaman, K., Loerke, D., Mettlen, M. et al. Robust single-particle tracking in live-cell time-lapse sequences. Nat Methods 5, 695–702 (2008). https://doi.org/10.1038/nmeth.1237
 [^3]: Jonker R, and Volgenant A. A shortest augmenting path algorithm for dense and sparse linear assignment problems. Computing 38, 325 (1987). https://doi.org/10.1007/978-3-642-73778-7_164
+
+### Changelog
+
+Dec-6-2024 - Modified code to also measure donor and acceptor intensities

@@ -297,20 +297,23 @@ classdef ECMCellTracker
 
                 end
 
+                %Label individual objects in the mask
                 cc = bwlabeln(mask);
 
                 %Measure nuclei position
-                data = regionprops(cc, 'Centroid');
+                data = regionprops(cc, 'Centroid', 'PixelIdxList');
 
                 %Make a cytoplasmic ring
                 cytoMask = imdilate(cc, strel('disk', 3));
                 cytoMask(cc > 0) = 0;
 
-                %Measure ERK ratio
-                cytoData = regionprops(cytoMask, Iacceptor./Idonor, 'MeanIntensity');
+                %Measure ERK channel intensities
+                % cytoData = regionprops(cytoMask, Iacceptor./Idonor, 'MeanIntensity');
 
-                for iData = 1:numel(cytoData)
-                    data(iData).ERKintensity = cytoData(iData).MeanIntensity;
+                for iData = 1:numel(data)
+                    data(iData).DonorIntensity = mean(Idonor(data(iData).PixelIdxList), 'all');
+                    data(iData).AcceptorIntensity = mean(Iacceptor(data(iData).PixelIdxList), 'all');
+                    data(iData).ERKintensity = mean(Iacceptor(data(iData).PixelIdxList ./ Idonor(data(iData).PixelIdxList, 'all');
                 end
 
                 LAP = assignToTrack(LAP, iT, data);
@@ -343,9 +346,6 @@ classdef ECMCellTracker
             trackStruct = tracks.Tracks;
 
             %% Filter out tracks that are too short
-
-
-
 
             %Perform a quality check by looking for cells that are tracked
             %for at least 90% of the movie
@@ -553,7 +553,6 @@ classdef ECMCellTracker
                     'Expected mask to be either a logical or RGB image.');
             end
 
-
             %Recast the image into the original image class
             if imageIsInteger
                 multFactor = double(intmax(imageClass));
@@ -562,8 +561,6 @@ classdef ECMCellTracker
             else
                 %multFactor = 1;
             end
-
-
 
             %Produce the desired outputs
             if nargout == 0
