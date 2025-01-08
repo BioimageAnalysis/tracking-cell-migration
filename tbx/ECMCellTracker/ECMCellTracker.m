@@ -313,7 +313,7 @@ classdef ECMCellTracker
                 for iData = 1:numel(data)
                     data(iData).DonorIntensity = mean(Idonor(data(iData).PixelIdxList), 'all');
                     data(iData).AcceptorIntensity = mean(Iacceptor(data(iData).PixelIdxList), 'all');
-                    data(iData).ERKintensity = mean(Iacceptor(data(iData).PixelIdxList ./ Idonor(data(iData).PixelIdxList, 'all');
+                    data(iData).ERKintensity = mean(Iacceptor(data(iData).PixelIdxList) ./ Idonor(data(iData).PixelIdxList), 'all');
                 end
 
                 LAP = assignToTrack(LAP, iT, data);
