@@ -1,8 +1,5 @@
-cropImages('Z:\transferred files-09162024\HaCat-EKAR-H2B-3rd-2__2024-09-06T15_46_58-Measurement 1', 2, 2, 2, [298 509 542 749], 'test')
-
-cropImages('Z:\transferred files-09162024\HaCat-EKAR-H2B-3rd-2__2024-09-06T15_46_58-Measurement 1', 2, 3, 1, [229 373 449 617], 'test')
-
-cropImages('Z:\transferred files-09162024\HaCat-EKAR-H2B-3rd-2__2024-09-06T15_46_58-Measurement 1', 2, 4, 1, [28 549 234 756], 'test')
-
-cropImages('Z:\transferred files-09162024\HaCat-EKAR-H2B-3rd-2__2024-09-06T15_46_58-Measurement 1', 2, 5, 2, [318 352 624 752], 'test')
+cropImages('X:\11012024\Hacat-EKAR-H2BmCherry-1\QB-Hacat-EKAR-H2BmCherry-11012024__2024-11-01T16_56_55-Measurement 1', 2, 2, 2, [341 217 1054 1017], 'X:\11012024\Hacat-EKAR-H2BmCherry-1\cropped')
+cropImages('X:\11012024\Hacat-EKAR-H2BmCherry-1\QB-Hacat-EKAR-H2BmCherry-11012024__2024-11-01T16_56_55-Measurement 1', 2, 3, 1, [186 477 949 1018], 'X:\11012024\Hacat-EKAR-H2BmCherry-1\cropped')
+cropImages('X:\11012024\Hacat-EKAR-H2BmCherry-1\QB-Hacat-EKAR-H2BmCherry-11012024__2024-11-01T16_56_55-Measurement 1', 2, 3, 3, [525 402 1042 1013], 'X:\11012024\Hacat-EKAR-H2BmCherry-1\cropped')
+cropImages('X:\11012024\Hacat-EKAR-H2BmCherry-1\QB-Hacat-EKAR-H2BmCherry-11012024__2024-11-01T16_56_55-Measurement 1', 2, 4, 1, [1 518 1050 550], 'X:\11012024\Hacat-EKAR-H2BmCherry-1\cropped')
 

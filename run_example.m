@@ -6,7 +6,7 @@ T.ParallelRequestedWorkers = 2;
 T.ParallelProcess = false;
 T.FrameRange = 1:288;
 
-T.ROI = [436 464 500 540];
+T.ROI = [1 518 1050 550];
 % T.SegmentType = 'nuclear';
 % T.NucleiQuality = 50;
 
@@ -17,5 +17,5 @@ outputDir = 'X:\11012024\Hacat-EKAR-H2BmCherry-1\QB-Hacat-EKAR-H2BmCherry-110120
 % process(T, dataDir, outputDir, [2, 2, 2; 2, 2, 3; 2, 3, 1; 2 3 2; 2, 3, 3; 2 4 1; 2 4 2; 2 4 3;...
 %     3, 2, 1; ])
 
-process(T, dataDir, outputDir, [2, 3, 1])
+process(T, dataDir, outputDir, [2, 4, 1])
 %[2, 2, 1
