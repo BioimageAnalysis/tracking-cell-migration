@@ -1,3 +1,4 @@
+%EXPORT_MASKS  Export masks to correct for ground truth
 clearvars
 clc
 
