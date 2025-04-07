@@ -3,8 +3,8 @@ clc
 
 reader = HarmonyReader('Z:\CIC Datasets\qb-RPE-MDA-20250207__2025-02-07T18_09_39-Measurement 1\hs');
 
-Ired = readImage(reader, 'r02c06', 2, 1, 1, 144);
-Igreen = readImage(reader, 'r02c06', 2, 1, 2, 144);
+Ired = readImage(reader, 2, 6, 2, 1, 1, 144);
+Igreen = readImage(reader, 2, 6, 2, 1, 2, 144);
 
 % figure(1)
 maskRed = imbinarize(Ired, 'adaptive');
