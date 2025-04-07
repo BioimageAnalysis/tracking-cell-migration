@@ -1,7 +1,8 @@
 clearvars
 clc
 
-reader = HarmonyReader('Z:\CIC Datasets\qb-RPE-MDA-20250207__2025-02-07T18_09_39-Measurement 1\hs');
+A = cicAnalyzer;
+analyzeImage(A)
 
 Ired = readImage(reader, 2, 6, 2, 1, 1, 144);
 Igreen = readImage(reader, 2, 6, 2, 1, 2, 144);
@@ -31,3 +32,4 @@ Igreen_norm = (Igreen_norm - min(Igreen_norm(:)))/(max(Igreen_norm(:)) - min(Igr
 Irgb = cat(3, Ired_norm, 1.5 * Igreen_norm, zeros(size(Ired), 'double'));
 
 showoverlay(Irgb, bwperim(maskOverlap), 'color', [1 1 1])
+
