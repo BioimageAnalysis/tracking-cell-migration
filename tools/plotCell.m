@@ -10,6 +10,8 @@ col = 3;
 field = 3;
 
 ct = getTrack(tracks, 2712);
+
+ROI = opts.ROI;
 %%
 
 v = VideoWriter('test.avi');
@@ -21,9 +23,12 @@ for iFrames = 1:numel(ct.Frames)
 
     I = ECMCellTracker.readImage(path, row, col, field, ct.Frames(iFrames), 3);
 
+    I = I(ROI(1):(ROI(1) + ROI(3)), ROI(2):(ROI(2) + ROI(4)));
+
     if ~any(isnan(ct.Centroid(iFrames, :)))
         I = double(I);
         I = (I - min(I(:)))/(max(I(:)) - min(I(:)));
+        I = imadjust(I);
         I = insertShape(I, 'circle', [ct.Centroid(iFrames, :) 4]);
 
         writeVideo(v, I);

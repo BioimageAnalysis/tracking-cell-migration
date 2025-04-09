@@ -323,7 +323,8 @@ classdef ECMCellTracker
                 InuclNorm = ECMCellTracker.normalizeImage(I);
                 IratioNorm = ECMCellTracker.normalizeImage(double(Iacceptor) ./ (double(Idonor) + 0.001));
 
-                Iout = cat(3, InuclNorm, IratioNorm, IratioNorm);
+                %Iout = cat(3, InuclNorm, IratioNorm, IratioNorm);
+                Iout = imadjust(InuclNorm);
 
                 expandFactor = 1;
                 % Iout = imresize(Iout, expandFactor);
@@ -332,9 +333,15 @@ classdef ECMCellTracker
                     'ShapeColor', 'yellow');
 
                 for iAT = LAP.activeTrackIDs
-                    ct = getTrack(LAP, iAT);
-                    Iout = insertText(Iout, ct.Centroid(end, :) * expandFactor, int2str(iAT), ...
-                        'TextColor', 'white', 'BoxOpacity', 0);
+                    try
+                        ct = getTrack(LAP, iAT);
+                        Iout = insertText(Iout, ct.Centroid(end, :) * expandFactor, int2str(iAT), ...
+                            'TextColor', 'white', 'BoxOpacity', 0);
+                    catch 
+                        
+                        
+                    end
+
                 end
 
                 writeVideo(vid, Iout);
