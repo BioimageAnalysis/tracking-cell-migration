@@ -1,6 +1,6 @@
 clearvars
 clc
-load('test.mat')
+load('Z:\CIC Datasets\qb-RPE-MDA-20250207__2025-02-07T18_09_39-Measurement 1\processed\20250411\')
 
 dt = 896.44;
 tt = (1:numel(storeCellCounts.Red)) * dt/(3600);
