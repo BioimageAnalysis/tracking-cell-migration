@@ -34,8 +34,8 @@ classdef cicAnalyzer
 
                     for iT = 1:reader.NumFrames
 
-                        Ired = readImage(reader, 2, 6, 2, 1, 1, iT);
-                        Igreen = readImage(reader, 2, 6, 2, 1, 2, iT);
+                        Ired = readImage(reader, row, col, iField, 1, 1, iT);
+                        Igreen = readImage(reader, row, col, iField, 1, 2, iT);
 
                         maskRed = cicAnalyzer.segment(Ired);
                         maskGreen = cicAnalyzer.segment(Igreen);
@@ -83,8 +83,6 @@ classdef cicAnalyzer
                         end
 
                         writeVideo(vid, Iout);
-
-                        %imshow(Iout)
 
                     end
 
