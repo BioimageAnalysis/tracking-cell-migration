@@ -243,6 +243,15 @@ classdef ECMCellTracker
                             end
                         end
 
+                    case 'operaphenix2'
+
+                        I = ECMCellTracker.readImage2(dataDir, row, col, field, iT, opts.NuclearChannel);
+
+                        Idonor = ECMCellTracker.readImage2(dataDir, row, col, field, iT, opts.DonorChannel);
+                        Iacceptor = ECMCellTracker.readImage2(dataDir, row, col, field, iT, opts.AcceptorChannel);
+
+                        skippedFrames = 0;
+
                     case 'exportedtiff'
 
                         %Expect the 'location' to be the base filename
@@ -301,7 +310,7 @@ classdef ECMCellTracker
                 cc = bwlabeln(mask);
 
                 %Measure nuclei position
-                data = regionprops(cc, 'Centroid', 'PixelIdxList');
+                data = regionprops(cc, 'Centroid', 'PixelIdxList', 'Area');
 
                 %Make a cytoplasmic ring
                 cytoMask = imdilate(cc, strel('disk', 3));
@@ -432,6 +441,54 @@ classdef ECMCellTracker
 
             filename = ...
                 sprintf('r%02dc%02df%02dp%02d-ch%dsk%dfk1fl1.tiff', ...
+                ip.Results.row, ...
+                ip.Results.col, ...
+                ip.Results.field, ...
+                ip.Results.plane, ...
+                ip.Results.channel, ...
+                ip.Results.frame);
+
+            %Harmony output filename:
+            % r03c03f01p01-ch1sk1fk1fl1.tiff
+            %
+            % Where
+            % r (01-08) = row
+            % c (01-12) = column
+            % f (01-09) = field
+            % p (01-21) = plane
+            % ch (1-4) = channel
+            % sk = timepoint
+
+            if ~exist(fullfile(dataDir, filename), 'file')
+                error('ECMCellTracker:readImage:FileNotFound', 'Could not find file %s.', ...
+                    filename)
+            end
+
+            img = imread(fullfile(dataDir, filename));
+
+        end
+        
+        function img = readImage2(dataDir, varargin)
+            %READIMAGE  Reads an image from Harmony
+            %
+            %  I = READIMAGE(FOLDER, ROW, COL) reads the (first) image at
+            %  the specified well. Additional parameters can be passed on
+            %  to specify the field of view, frame, channel, and z-plane to
+            %  read. Note that the parameters must be passed in that order.
+            %  FOLDER should be the path to the folder that exported from
+            %  the Harmony software.
+
+            ip = inputParser;
+            addRequired(ip, 'row')
+            addRequired(ip, 'col')
+            addOptional(ip, 'field', 1)
+            addOptional(ip, 'frame', 1)
+            addOptional(ip, 'channel', 1)
+            addOptional(ip, 'plane', 1)
+            parse(ip, varargin{:})
+
+            filename = ...
+                sprintf('r%02dc%02df%02dp%02d-ch%02dt%02d.tiff', ...
                 ip.Results.row, ...
                 ip.Results.col, ...
                 ip.Results.field, ...
